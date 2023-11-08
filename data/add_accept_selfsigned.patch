@@ -1,0 +1,56 @@
+diff --git a/PKGBUILD b/PKGBUILD
+index 936eeb5..6497fab 100644
+--- a/PKGBUILD
++++ b/PKGBUILD
+@@ -3,8 +3,8 @@
+ # Contributor: ArcticVanguard <LideEmily at gmail dot com>
+ # Contributor: ledti <antergist at gmail dot com>
+ pkgname=obs-studio-git
+-pkgver=30.0.0.beta3
+-pkgrel=2
++pkgver=30.0.0.rc1
++pkgrel=1
+ pkgdesc="Free and open source software for video recording and live streaming."
+ arch=("i686" "x86_64")
+ url="https://github.com/obsproject/obs-studio"
+@@ -34,9 +34,11 @@ source=("$pkgname::git+https://github.com/obsproject/obs-studio.git#branch=maste
+         "git+https://github.com/obsproject/obs-browser.git"
+         "git+https://github.com/obsproject/obs-websocket.git"
+         "git+https://github.com/nayuki/QR-Code-generator.git"
+-        "fix_python_binary_loading.patch")
++        "fix_python_binary_loading.patch"
++        "accept_selfsigned_certs.patch")
+ md5sums=("SKIP" "SKIP" "SKIP" "SKIP" "SKIP"
+-         "051b90f05e26bff99236b8fb1ad377d1")
++         "051b90f05e26bff99236b8fb1ad377d1"
++         "74aadcd31873d2cda92a771ed84c776e")
+ 
+ pkgver() {
+   cd $pkgname
+@@ -48,6 +50,7 @@ prepare() {
+   gitconf="protocol.file.allow=always"
+ 
+   patch -Np1 < "$srcdir"/fix_python_binary_loading.patch
++  patch -Np1 < "$srcdir"/accept_selfsigned_certs.patch
+   git config submodule.plugins/obs-outputs/ftl-sdk.url $srcdir/ftl-sdk
+   git config submodule.plugins/obs-browser.url $srcdir/obs-browser
+   git config submodule.plugins/obs-websocket.url $srcdir/obs-websocket
+diff --git a/accept_selfsigned_certs.patch b/accept_selfsigned_certs.patch
+new file mode 100644
+index 0000000..a617a9b
+--- /dev/null
++++ b/accept_selfsigned_certs.patch
+@@ -0,0 +1,13 @@
++diff --git a/plugins/obs-outputs/librtmp/rtmp.h b/plugins/obs-outputs/librtmp/rtmp.h
++index d1cddd412..95c05b106 100644
++--- a/plugins/obs-outputs/librtmp/rtmp.h
+++++ b/plugins/obs-outputs/librtmp/rtmp.h
++@@ -94,7 +94,7 @@ typedef tls_ctx *TLS_CTX;
++   mbedtls_ssl_init(s);\
++   mbedtls_ssl_config_defaults(&ctx->conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);\
++   mbedtls_ssl_conf_rng(&ctx->conf, mbedtls_ctr_drbg_random, &ctx->ctr_drbg);\
++-  mbedtls_ssl_conf_authmode(&ctx->conf, MBEDTLS_SSL_VERIFY_REQUIRED);\
+++  mbedtls_ssl_conf_authmode(&ctx->conf, MBEDTLS_SSL_VERIFY_OPTIONAL);\
++   mbedtls_ssl_setup(s, &ctx->conf)
++ 
++ #define TLS_setfd(s,fd)	mbedtls_ssl_set_bio(s, fd, mbedtls_net_send, mbedtls_net_recv, NULL)
